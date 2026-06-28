@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TF家族四代CP故事生成器</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.navbar {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar h1 {
+    color: #ff6b81;
+    font-size: 1.6rem;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    background: transparent;
+    border: 2px solid #ff6b81;
+    color: #ff6b81;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background: #ff6b81;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.page {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    color: #ff4757;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+.card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+/* 人物库 */
+.member-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.member-card {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.member-card:hover {
+    transform: translateY(-5px);
+    border-color: #ff6b81;
+    box-shadow: 0 10px 25px rgba(255,107,129,0.3);
+}
+
+.member-card.locked {
+    border-color: #ff4757;
+    background: linear-gradient(135deg, #ffe0e0 0%, #ffb3b3 100%);
+}
+
+.member-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.member-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ff4757;
+    margin-bottom: 0.5rem;
+}
+
+.member-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.tag {
+    background: #ff6b81;
+    color: #fff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.add-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr 1fr;
+    gap: 1rem;
+    align-items: end;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 2px solid #ffd1d1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #ff6b81;
+}
+
+.main-btn {
+    background: linear-gradient(135deg, #ff6b81 0%, #ff4757 100%);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255,107,129,0.4);
+}
+
+.main-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,129,0.5);
+}
+
+.main-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-center {
+    text-align: center;
+}
+
+/* 配对页面 */
+.cp-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+    margin: 3rem 0;
+    flex-wrap: wrap;
+}
+
+.cp-member {
+    text-align: center;
+    min-width: 180px;
+}
+
+.cp-member .member-card {
+    width: 200px;
+    margin: 0 auto;
+}
+
+.cp-heart {
+    font-size: 3rem;
+    color: #ff4757;
+    animation: heartbeat 1.5s infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.cp-name {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff4757;
+    margin: 1rem 0;
+}
+
+.cp-desc {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+/* 故事生成 */
+.scene-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.scene-card {
+    background: #fff5f5;
+    border: 2px solid #ffd1d1;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.scene-card:hover, .scene-card.selected {
+    background: #ff6b81;
+    border-color: #ff4757;
+    color: #fff;
+}
+
+.story-box {
+    background: #fffaf0;
+    border-left: 4px solid #ff6b81;
+    padding: 2rem;
+    border-radius: 8px;
+    line-height: 2;
+    font-size: 1.05rem;
+    white-space: pre-wrap;
+    margin-top: 1.5rem;
+}
+
+/* 故事存档 */
+.story-item {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.story-item h4 {
+    color: #ff4757;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+}
+
+.story-item p {
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 0.8rem;
+}
+
+.story-meta {
+    color: #999;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.delete-btn {
+    background: transparent;
+    border: none;
+    color: #ff4757;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.tip-box {
+    background: #fff0f0;
+    border-left: 4px solid #ff6b81;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+
+.empty-tip {
+    text-align: center;
+    color: #999;
+    padding: 3rem;
+}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>💫 四代CP故事生成器</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn active" data-page="home" onclick="changePage('home')">首页</button>
+            <button class="nav-btn" data-page="members" onclick="changePage('members')">人物库</button>
+            <button class="nav-btn" data-page="pair" onclick="changePage('pair')">随机配对</button>
+            <button class="nav-btn" data-page="story" onclick="changePage('story')">生成故事</button>
+            <button class="nav-btn" data-page="archive" onclick="changePage('archive')">故事存档</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- 首页 -->
+        <div class="page active" id="home">
+            <div class="card">
+                <h2>欢迎来到四代CP生成小屋</h2>
+                <p style="text-align: center; font-size: 1.1rem; margin-bottom: 2rem;">
+                    在这里你可以解锁各种CP组合，生成不同场景的甜蜜小故事 ✨
+                </p>
+                <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="main-btn" onclick="changePage('pair')">🎲 立即随机配对</button>
+                    <button class="main-btn" onclick="changePage('members')">👥 管理人物库</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 人物库 -->
+        <div class="page" id="members">
+            <h2>👥 人物资料库</h2>
+            <div class="card">
+                <div class="tip-box">
+                    💡 点击人物卡片可以锁定，在配对页会优先使用锁定的人物；也可以添加自己喜欢的自定义人物
+                </div>
+                <h3 style="margin-bottom: 1rem; color: #ff4757;">添加新人物</h3>
+                <div class="add-form">
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" id="new-name" placeholder="如：张函瑞">
+                    </div>
+                    <div class="form-group">
+                        <label>昵称/外号</label>
+                        <input type="text" id="new-nick" placeholder="如：瑞瑞">
+                    </div>
+                    <div class="form-group">
+                        <label>人设标签（用空格分隔）</label>
+                        <input type="text" id="new-tags" placeholder="如：主唱 温柔 学霸">
+                    </div>
+                    <button class="main-btn" onclick="addMember()">添加</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 1rem; color: #ff4757;">全部人物</h3>
+                <div class="member-grid" id="member-list"></div>
+            </div>
+        </div>
+
+        <!-- 随机配对 -->
+        <div class="page" id="pair">
+            <h2>🎲 随机CP配对</h2>
+            <div class="card">
+                <div class="tip-box">
+                    💡 已锁定的人物会固定参与配对，去「人物库」点击卡片即可锁定/解锁
+                </div>
+                <div class="cp-container">
+                    <div class="cp-member" id="cp-a">
+                        <div class="member-card">
+                            <div class="member-avatar">?</div>
+                            <div class="member-name">等待抽取</div>
+                        </div>
+                    </div>
+                    <div class="cp-heart">❤</div>
+                    <div class="cp-member" id="cp-b">
+                        <div class="member-card">
+                            <div class="member-avatar">?</div>
+                            <div class="member-name">等待抽取</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cp-name" id="cp-name">???</div>
+                <p class="cp-desc" id="cp-desc">点击下方按钮抽取你的天命CP</p>
+                <div class="btn-center">
+                    <button class="main-btn" onclick="randomPair()">🔄 重新随机</button>
+                    <button class="main-btn" onclick="changePage('story')" style="margin-left: 1rem;">✍️ 去生成故事</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 故事生成 -->
+        <div class="page" id="story">
+            <h2>✍️ 故事生成器</h2>
+            <div class="card">
+                <div class="tip-box" id="current-cp-tip">
+                    当前CP：请先去「随机配对」页面抽取一组CP
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; color: #ff4757;">选择场景</h3>
+                <div class="scene-select" id="scene-list">
+                    <div class="scene-card" data-scene="campus">校园同桌</div>
+                    <div class="scene-card" data-scene="stage">舞台合作</div>
+                    <div class="scene-card" data-scene="daily">宿舍日常</div>
+                    <div class="scene-card" data-scene="trip">外出团建</div>
+                    <div class="scene-card" data-scene="rainy">雨天偶遇</div>
+                    <div class="scene-card" data-scene="birthday">生日惊喜</div>
+                </div>
+
+                <div class="btn-center">
+                    <button class="main-btn" id="gen-btn" onclick="generateStory()" disabled>✨ 生成故事</button>
+                </div>
+
+                <div id="story-result" style="display: none;">
+                    <h3 style="margin-top: 2rem; color: #ff4757;">生成结果</h3>
+                    <div class="story-box" id="story-content"></div>
+                    <div class="btn-center" style="margin-top: 1.5rem;">
+                        <button class="main-btn" onclick="saveStory()">💾 保存到存档</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 故事存档 -->
+        <div class="page" id="archive">
+            <h2>📚 故事存档</h2>
+            <div class="card" id="archive-list">
+                <div class="empty-tip">还没有保存的故事，去生成一个吧~</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// 默认人物数据
+const defaultMembers = [
+    {name: "张函瑞", nick: "瑞瑞", tags: ["主唱", "温柔", "学霸", "猫系"]},
+    {name: "张桂源", nick: "桂源", tags: ["舞担", "阳光", "直球", "狗狗系"]},
+    {name: "王橹杰", nick: "橹杰", tags: ["rap担", "酷盖", "慢热", "反差萌"]},
+    {name: "陈奕恒", nick: "恒恒", tags: ["忙内", "可爱", "团宠", "软萌"]},
+    {name: "左奇函", nick: "奇函", tags: ["全能", "调皮", "鬼马", "小太阳"]},
+    {name: "杨博文", nick: "博文", tags: ["舞担", "沉稳", "靠谱", "大哥感"]},
+    {name: "智恩涵", nick: "恩涵", tags: ["主唱", "安静", "文艺", "清冷感"]},
+    {name: "张仲语", nick: "仲语", tags: ["可爱", "话痨", "元气", "小甜豆"]},
+    {name: "陈浚铭", nick: "浚铭", tags: ["主唱", "温柔", "努力", "治愈系"]},
+    {name: "汪俊熙", nick: "俊熙", tags: ["舞担", "高冷", "慢热", "外冷内热"]},
+    {name: "王浩", nick: "浩浩", tags: ["rap担", "阳光", "搞笑", "气氛组"]},
+    {name: "黄朔", nick: "小朔", tags: ["全能", "稳重", "温柔", "哥哥感"]}
+];
+
+let members = [];
+let lockedMembers = [];
+let currentPair = null;
+let currentScene = null;
+let storyArchive = [];
+
+// 初始化
+function init() {
+    // 加载本地数据
+    const savedMembers = localStorage.getItem('tf4_members');
+    const savedLocked = localStorage.getItem('tf4_locked');
+    const savedArchive = localStorage.getItem('tf4_archive');
+    
+    members = savedMembers ? JSON.parse(savedMembers) : [...defaultMembers];
+    lockedMembers = savedLocked ? JSON.parse(savedLocked) : [];
+    storyArchive = savedArchive ? JSON.parse(savedArchive) : [];
+    
+    renderMemberList();
+    renderArchive();
+}
+
+// 页面切换
+function changePage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.nav-btn[data-page="${pageId}"]`).classList.add('active');
+
+    if (pageId === 'members') renderMemberList();
+    if (pageId === 'pair' && currentPair) showPairResult();
+    if (pageId === 'archive') renderArchive();
+}
+
+// 渲染人物列表
+function renderMemberList() {
+    const box = document.getElementById('member-list');
+    box.innerHTML = '';
+    
+    members.forEach((m, idx) => {
+        const isLocked = lockedMembers.includes(m.name);
+        const card = document.createElement('div');
+        card.className = `member-card ${isLocked ? 'locked' : ''}`;
+        card.innerHTML = `
+            <div class="member-avatar">${m.name.charAt(0)}</div>
+            <div class="member-name">${m.name}</div>
+            <div style="color: #888; font-size: 0.9rem;">${m.nick}</div>
+            <div class="member-tags">
+                ${m.tags.slice(0,3).map(t => `<span class="tag">${t}</span>`).join('')}
+            </div>
+            <button class="delete-btn" style="position:absolute; top:8px; right:8px;" onclick="event.stopPropagation(); deleteMember(${idx})">×</button>
+        `;
+        card.addEventListener('click', () => toggleLock(m.name));
+        box.appendChild(card);
+    });
+}
+
+// 添加人物
+function addMember() {
+    const name = document.getElementById('new-name').value.trim();
+    const nick = document.getElementById('new-nick').value.trim();
+    const tagsStr = document.getElementById('new-tags').value.trim();
+    
+    if (!name) {
+        alert('请输入姓名！');
+        return;
+    }
+    
+    const tags = tagsStr ? tagsStr.split(/\s+/) : [];
+    members.push({name, nick: nick || name, tags});
+    saveData();
+    renderMemberList();
+    
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-nick').value = '';
+    document.getElementById('new-tags').value = '';
+    alert('添加成功！');
+}
+
+// 删除人物
+function deleteMember(idx) {
+    if (!confirm('确定要删除这个人物吗？')) return;
+    const name = members[idx].name;
+    members.splice(idx, 1);
+    lockedMembers = lockedMembers.filter(n => n !== name);
+    saveData();
+    renderMemberList();
+}
+
+// 锁定/解锁
+function toggleLock(name) {
+    const idx = lockedMembers.indexOf(name);
+    if (idx > -1) {
+        lockedMembers.splice(idx, 1);
+    } else {
+        if (lockedMembers.length >= 2) {
+            alert('最多只能锁定2个人哦~');
+            return;
+        }
+        lockedMembers.push(name);
+    }
+    saveData();
+    renderMemberList();
+}
+
+// 随机配对
+function randomPair() {
+    let pool = [...members];
+    let a, b;
+    
+    // 处理锁定的人物
+    if (lockedMembers.length === 2) {
+        a = members.find(m => m.name === lockedMembers[0]);
+        b = members.find(m => m.name === lockedMembers[1]);
+    } else if (lockedMembers.length === 1) {
+        a = members.find(m => m.name === lockedMembers[0]);
+        pool = pool.filter(m => m.name !== a.name);
+        b = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+        a = pool[Math.floor(Math.random() * pool.length)];
+        pool = pool.filter(m => m.name !== a.name);
+        b = pool[Math.floor(Math.random() * pool.length)];
+    }
+    
+    currentPair = {a, b};
+    showPairResult();
+}
+
+function showPairResult() {
+    const {a, b} = currentPair;
+    
+    document.getElementById('cp-a').innerHTML = `
+        <div class="member-card">
+            <div class="member-avatar">${a.name.charAt(0)}</div>
+            <div class="member-name">${a.name}</div>
+            <div style="color: #888; font-size: 0.9rem;">${a.nick}</div>
+        </div>
+    `;
+    document.getElementById('cp-b').innerHTML = `
+        <div class="member-card">
+            <div class="member-avatar">${b.name.charAt(0)}</div>
+            <div class="member-name">${b.name}</div>
+            <div style="color: #888; font-size: 0.9rem;">${b.nick}</div>
+        </div>
+    `;
+    
+    // 生成CP名
+    const cpName = a.name.charAt(0) + b.name.charAt(0);
+    document.getElementById('cp-name').textContent = cpName + ' CP';
+    document.getElementById('cp-desc').textContent = `${a.tags[0]} × ${b.tags[0]} 的奇妙组合`;
+    
+    // 更新故事页提示
+    document.getElementById('current-cp-tip').innerHTML = `当前CP：<strong>${a.name} × ${b.name}</strong>（${cpName}）`;
+    document.getElementById('gen-btn').disabled = !currentScene;
+}
+
+// 场景选择
+document.querySelectorAll('.scene-card').forEach(card => {
+    card.addEventListener('click', function() {
+        document.querySelectorAll('.scene-card').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+        currentScene = this.dataset.scene;
+        document.getElementById('gen-btn').disabled = !currentPair;
+    });
+});
+
+// 故事模板
+const storyTemplates = {
+    campus: [
+        `开学第一天，{a}抱着书本走进教室，刚好被安排坐在{b}的旁边。{b}抬眼看向他，嘴角轻轻扬起，递过来一颗橘子糖：“新同桌你好，我叫{b}。”\n\n{a}接过糖，指尖不小心碰到对方的手心，脸颊瞬间发烫。窗外的阳光刚好落在两人之间的课桌上，连灰尘都在光里慢悠悠地转着圈。\n\n后来他们一起刷题，一起在晚自习后绕着操场散步，{b}总爱走在靠马路的那一侧。有人问起他们关系好不好，{a}总是低头笑，而{b}会侧过头看他，眼里盛着满溢的温柔。`,
+        `午休的时候教室里很安静，{a}趴在桌上补觉，迷迷糊糊感觉有人给自己披上了外套。他睁开眼，看见{b}正坐在旁边翻书，指尖轻轻翻过书页，连动作都放得很轻。\n\n“醒了？”{b}侧过头，声音压得很低，“还有二十分钟上课，再睡会儿吧。”\n\n{a}重新把脸埋进臂弯，嘴角却偷偷翘了起来。他闻到外套上淡淡的洗衣液味道，和{b}身上的味道一模一样，干净又让人安心。`
+    ],
+    stage: [
+        `公演那天，聚光灯打在舞台中央，{a}和{b}并肩站在升降台上。音乐响起的瞬间，两人同时抬眼，在镜子里对上了视线。\n\n这是他们第一次双人舞台，排练了无数个日夜，从动作卡不上拍，到现在一个眼神就知道对方下一步要落在哪里。最后一个收尾动作，{b}伸手揽住{a}的腰，将人稳稳带向自己，台下瞬间爆发出尖叫。\n\n下台的时候{a}还在喘气，{b}递过来一瓶水，笑着揉了揉他的头发：“跳得很好，比排练的时候还要好。”\n\n灯光落在{b}的发梢上，镀上一层金边。{a}忽然觉得，能和这个人一起站在舞台上，真的太好了。`,
+        `月末考核的主题是合作舞台，{a}和{b}被分到了一组。选歌的时候两人意见出奇一致，连编舞的想法都能撞到一起。\n\n练习室的灯亮到深夜，{a}一个动作总做不好，急得额头冒汗。{b}从后面扶住他的肩膀，低声说：“别急，我带着你走一遍。”\n\n他的手掌很暖，力道刚好，带着{a}慢慢踩准每一个节拍。镜子里两个人的影子叠在一起，随着音乐起落，像一幅早就该这样的画。\n\n考核那天他们拿了第一。下台后{a}扑过去抱{b}，声音都带着颤：“我们做到了！”\n{b}回抱住他，下巴轻轻抵在他肩上：“嗯，我们做到了。”`
+    ],
+    daily: [
+        `周末的宿舍很安静，其他人都出去了，只剩{a}和{b}两个人。{a}窝在沙发上看动漫，{b}坐在旁边抱着吉他轻轻拨弦。\n\n阳光从窗帘缝里溜进来，在地板上拉出长长的一道。{a}看着看着就歪了头，靠在了{b}的肩膀上。{b}手上的动作顿了一下，随即放轻了力道，继续弹着温柔的调子。\n\n不知道过了多久，{a}迷迷糊糊快要睡着，听见{b}很低很低地说了一句：“就这样也挺好的。”\n\n他假装没听见，往对方肩膀里又蹭了蹭。窗外的风轻轻吹，连时间都好像慢了下来。`,
+        `晚上饿醒的时候，{a}轻手轻脚摸去厨房，没想到冰箱前已经站了一个人。\n\n“饿了？”{b}回过头，手里还拿着一盒牛奶，“我煮点面，一起吃？”\n\n{a}点点头，坐在餐桌边托着下巴看{b}煮面。厨房的暖黄色灯光落下来，把对方的轮廓描得很软。\n\n两碗热气腾腾的面端上桌，煎蛋卧在最上面。{b}把自己碗里的煎蛋夹给{a}：“你长身体，多吃点。”\n\n凌晨两点的厨房，两碗面，两个人。没有很多话，却比任何时候都要安心。`
+    ],
+    trip: [
+        `团建去海边的时候，大家都在沙滩上玩闹，{a}却一个人坐在礁石上看海。{b}拿了瓶水走过去，在他身边坐下。\n\n“怎么一个人在这儿？”\n“有点累，歇会儿。”{a}侧过头笑，海风把他的头发吹得乱乱的。\n\n{b}没说话，只是陪着他坐。海浪一下一下拍着沙滩，远处有人在喊他们的名字，两人都没应。\n\n日落的时候天变成橘红色，海面闪着碎金一样的光。{b}忽然说：“以后还想和你一起来看海。”\n\n{a}看着他的侧脸，心跳突然漏了一拍。他轻轻“嗯”了一声，声音藏在风里，却清清楚楚传进了对方耳朵里。`,
+        `团建住民宿，晚上大家围在一起玩真心话大冒险。酒瓶转到{a}的时候，有人起哄问他最想和谁单独出来玩。\n\n{a}的目光下意识飘向{b}，又飞快收回来，红着脸说不知道。\n\n后来轮到{b}大冒险，他选了给通讯录第三个人打电话说“我想你了”。他翻着通讯录，指尖在第三个名字上停了很久，然后笑着拨了出去。\n\n几秒钟后，{a}的手机在口袋里震了起来。`
+    ],
+    rainy: [
+        `放学的时候忽然下起大雨，{a}站在教学楼门口发愁，没带伞的他不知道要等多久。\n\n一把伞忽然从旁边递了过来。{b}站在他身边，外套搭在手臂上：“我送你回去吧，我家顺路。”\n\n两人挤在一把伞里，肩膀挨得很近。{b}一直把伞往{a}那边倾，自己半边肩膀都湿了。{a}发现后往他那边推，却被{b}按住了手。\n\n“别乱动，你淋湿了会感冒。”{b}的声音很轻，混着雨声落在耳边。\n\n那天的路好像特别长，又好像特别短。{a}只记得对方掌心的温度，和雨里清晰的心跳声。`,
+        `练完舞出来才发现下雨了，{a}站在公司门口等车，冷得抱了抱胳膊。\n\n一件外套忽然披在了他肩上，带着淡淡的体温。{b}站在他身边，自己只穿了件薄卫衣：“披着，别冻感冒了。”\n\n“那你呢？”\n“我抗冻。”{b}笑了笑，露出浅浅的梨涡。\n\n车来的时候，{b}先一步撑开伞，护着{a}往车那边走。雨很大，伞下的空间却很小，小到能听见彼此的呼吸。\n\n上车后{a}裹着外套，上面全是{b}的味道。他看着窗外的雨，忽然觉得这场雨下得真好。`
+    ],
+    birthday: [
+        `{b}生日那天，{a}提前准备了很久的礼物。他攒了好久的零花钱，买了一把{b}念叨过很久的拨片。\n\n派对上人很多，{a}等到最后，趁大家都在切蛋糕的时候，把礼物塞给了{b}。“生日快乐。”他声音小小的，有点紧张。\n\n{b}拆开礼物的时候眼睛亮了一下，随即抬头看向{a}，眼里盛着笑：“你怎么知道我想要这个？”\n\n“我……我听你说过一次。”{a}挠了挠头，脸颊发烫。\n\n那天晚上{b}发了条朋友圈，只有一张拨片的照片，配文是：今年收到的最好的礼物。\n\n{a}对着屏幕看了很久，抱着被子在床上滚了一圈。`,
+        `{a}生日那天本来以为没人记得，训练结束收拾东西准备走，却被{b}叫住了。\n\n“跟我来个地方。”{b}神神秘秘的，蒙着他的眼睛把人带到了练习室。\n\n眼罩摘下来的时候，{a}愣住了。练习室里摆着小蛋糕，墙上贴了气球，暖黄色的灯串一闪一闪。\n\n“生日快乐。”{b}端着蛋糕走过来，蜡烛的光映在他眼睛里，“别人我都没叫，就想单独给你过一次。”\n\n{a}站在原地，鼻子忽然有点酸。他吹蜡烛的时候许了个愿，愿望和眼前的人有关。`
+    ]
+};
+
+// 生成故事
+function generateStory() {
+    if (!currentPair || !currentScene) return;
+    
+    const templates = storyTemplates[currentScene];
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    
+    const {a, b} = currentPair;
+    let story = template.replace(/\{a\}/g, a.name).replace(/\{b\}/g, b.name);
+    
+    document.getElementById('story-content').textContent = story;
+    document.getElementById('story-result').style.display = 'block';
+}
+
+// 保存故事
+function saveStory() {
+    if (!currentPair || !currentScene) return;
+    
+    const story = document.getElementById('story-content').textContent;
+    const item = {
+        id: Date.now(),
+        cp: `${currentPair.a.name} × ${currentPair.b.name}`,
+        scene: getSceneName(currentScene),
+        content: story,
+        time: new Date().toLocaleString()
+    };
+    
+    storyArchive.unshift(item);
+    localStorage.setItem('tf4_archive', JSON.stringify(storyArchive));
+    alert('保存成功！去「故事存档」可以查看~');
+}
+
+function getSceneName(key) {
+    const map = {
+        campus: '校园同桌',
+        stage: '舞台合作',
+        daily: '宿舍日常',
+        trip: '外出团建',
+        rainy: '雨天偶遇',
+        birthday: '生日惊喜'
+    };
+    return map[key] || key;
+}
+
+// 渲染存档
+function renderArchive() {
+    const box = document.getElementById('archive-list');
+    
+    if (storyArchive.length === 0) {
+        box.innerHTML = '<div class="empty-tip">还没有保存的故事，去生成一个吧~</div>';
+        return;
+    }
+    
+    box.innerHTML = '';
+    storyArchive.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'story-item';
+        div.innerHTML = `
+            <h4>${item.cp} · ${item.scene}</h4>
+            <p>${item.content.substring(0, 80)}...</p>
+            <div class="story-meta">
+                <span>${item.time}</span>
+                <button class="delete-btn" onclick="deleteStory(${item.id})">删除</button>
+            </div>
+        `;
+        box.appendChild(div);
+    });
+}
+
+function deleteStory(id) {
+    if (!confirm('确定删除这条故事吗？')) return;
+    storyArchive = storyArchive.filter(s => s.id !== id);
+    localStorage.setItem('tf4_archive', JSON.stringify(storyArchive));
+    renderArchive();
+}
+
+// 保存数据到本地
+function saveData() {
+    localStorage.setItem('tf4_members', JSON.stringify(members));
+    localStorage.setItem('tf4_locked', JSON.stringify(lockedMembers));
+}
+
+// 页面加载完成初始化
+window.onload = init;
+    </script>
+</body>
+</html>
