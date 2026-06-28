@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第五人格战队创建&比赛模拟系统</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+}
+
+body {
+    background-color: #1a1a2e;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.navbar {
+    background-color: #16213e;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar h1 {
+    color: #e94560;
+    font-size: 1.8rem;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    background-color: transparent;
+    border: 2px solid #e94560;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background-color: #e94560;
+    transform: translateY(-2px);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.page {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h2 {
+    color: #e94560;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+h3 {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+h4 {
+    color: #e94560;
+    margin-bottom: 0.8rem;
+    font-size: 1.2rem;
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+#home {
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+#home h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.home-buttons {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+}
+
+.main-btn {
+    background-color: #e94560;
+    border: none;
+    color: #fff;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+}
+
+.main-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+}
+
+.main-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.tip-box, .select-tip, .match-tip, .rank-tip {
+    background-color: #16213e;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border-left: 4px solid #e94560;
+}
+
+.tip-box {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.select-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .select-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.player-list {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: 60vh;
+    overflow-y: auto;
+}
+
+.player-list h3 {
+    position: sticky;
+    top: 0;
+    background-color: #16213e;
+    padding-bottom: 1rem;
+    z-index: 10;
+}
+
+.player-card {
+    background-color: #0f3460;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.player-card:hover {
+    transform: translateX(5px);
+    border-color: #e94560;
+}
+
+.player-card.selected {
+    background-color: #e94560;
+    border-color: #fff;
+}
+
+.player-info {
+    flex: 1;
+}
+
+.player-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.player-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #ddd;
+    flex-wrap: wrap;
+}
+
+.select-btn {
+    background-color: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.select-btn:hover {
+    background-color: #fff;
+    color: #0f3460;
+}
+
+.player-card.selected .select-btn {
+    background-color: #fff;
+    color: #e94560;
+}
+
+.confirm-btn-container, .match-btn-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.team-header {
+    background-color: #16213e;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.team-header h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.team-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e94560;
+}
+
+.team-players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .team-players {
+        grid-template-columns: 1fr;
+    }
+}
+
+.player-group {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.team-select-container {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+#match-team-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.team-card {
+    background-color: #0f3460;
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    user-select: none;
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+    border-color: #e94560;
+}
+
+.team-card.selected {
+    background-color: #e94560;
+    border-color: #fff;
+}
+
+.team-card .team-name {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+#match-result {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+#result-list {
+    margin: 2rem 0;
+}
+
+.result-item {
+    background-color: #0f3460;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.result-item .vs {
+    color: #e94560;
+    font-weight: 700;
+    margin: 0 1rem;
+}
+
+.rank-list {
+    background-color: #16213e;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.rank-item {
+    background-color: #0f3460;
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    transition: all 0.2s ease;
+}
+
+.rank-item:hover {
+    transform: translateX(5px);
+}
+
+.rank-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e94560;
+    min-width: 50px;
+    text-align: center;
+}
+
+.rank-item:nth-child(1) .rank-number {
+    color: gold;
+    font-size: 2rem;
+}
+
+.rank-item:nth-child(2) .rank-number {
+    color: silver;
+    font-size: 1.8rem;
+}
+
+.rank-item:nth-child(3) .rank-number {
+    color: #cd7f32;
+    font-size: 1.6rem;
+}
+
+.rank-info {
+    flex: 1;
+}
+
+.rank-team-name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.rank-stats {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #ddd;
+    flex-wrap: wrap;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #16213e;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #e94560;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ff6b81;
+}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>第五人格战队系统</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn active" data-page="home" onclick="changePage('home')">首页</button>
+            <button class="nav-btn" data-page="select" onclick="changePage('select')">选手选择</button>
+            <button class="nav-btn" data-page="team" onclick="changePage('team')">我的战队</button>
+            <button class="nav-btn" data-page="match" onclick="changePage('match')">比赛模拟</button>
+            <button class="nav-btn" data-page="rank" onclick="changePage('rank')">最终排名</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page active" id="home">
+            <h2>欢迎来到第五人格战队创建系统</h2>
+            <p>在这里你可以创建自己的专属战队，参加模拟比赛，冲击冠军！</p>
+            <div class="home-buttons">
+                <button class="main-btn" onclick="changePage('select')">开始创建战队</button>
+                <button class="main-btn" onclick="changePage('rank')">查看官方战队排名</button>
+            </div>
+        </div>
+
+        <div class="page" id="select">
+            <h2>选手选择</h2>
+            <div class="select-tip">
+                <p>⚠️ 规则：必须选择 <strong>4个求生者</strong> + <strong>1-2个监管者</strong></p>
+                <p>已选求生者：<span id="survivor-count">0</span>/4 | 已选监管者：<span id="hunter-count">0</span>/2</p>
+            </div>
+            
+            <div class="select-container">
+                <div class="player-list">
+                    <h3>求生者列表</h3>
+                    <div id="survivor-list"></div>
+                </div>
+                <div class="player-list">
+                    <h3>监管者列表</h3>
+                    <div id="hunter-list"></div>
+                </div>
+            </div>
+
+            <div class="confirm-btn-container">
+                <button class="main-btn" id="confirm-select" disabled>确认选择，创建战队</button>
+            </div>
+        </div>
+
+        <div class="page" id="team">
+            <h2>我的战队</h2>
+            <div id="no-team-tip" class="tip-box">
+                <p>你还没有创建战队，快去选手选择页创建吧！</p>
+                <button class="main-btn" onclick="changePage('select')">去创建战队</button>
+            </div>
+            <div id="my-team-info" style="display: none;">
+                <div class="team-header">
+                    <h3>战队名称：<span id="team-name"></span></h3>
+                    <p>战队总评分：<span id="team-score"></span></p>
+                </div>
+                <div class="team-players">
+                    <div class="player-group">
+                        <h4>求生者阵容</h4>
+                        <div id="team-survivors"></div>
+                    </div>
+                    <div class="player-group">
+                        <h4>监管者阵容</h4>
+                        <div id="team-hunters"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="match">
+            <h2>比赛模拟</h2>
+            <div class="match-tip">
+                <p>点击下方战队卡片选择参赛队伍，选中后卡片变红，至少选择2个战队即可开始比赛</p>
+                <p>已选参赛战队：<span id="match-team-count">0</span> 个</p>
+            </div>
+            <div class="team-select-container">
+                <h3>参赛战队列表</h3>
+                <div id="match-team-list"></div>
+            </div>
+            <div class="match-btn-container">
+                <button class="main-btn" id="start-match" disabled>开始比赛</button>
+            </div>
+            <div id="match-result" style="display: none;">
+                <h3>比赛结果</h3>
+                <div id="result-list"></div>
+                <button class="main-btn" onclick="changePage('rank')">查看最终排名</button>
+            </div>
+        </div>
+
+        <div class="page" id="rank">
+            <h2>最终排名</h2>
+            <div class="rank-tip">
+                <p>排名规则：按净胜局数从高到低排序，净胜局相同按胜率排序</p>
+            </div>
+            <div class="rank-list" id="rank-list"></div>
+        </div>
+    </div>
+
+    <script>
+// ========== 1. 完整真实数据 ==========
+const survivorData = [
+    {"name": "TE_Drop", "games": 70, "avg_score": 7245, "avg_decode": 147.1, "rescue_count": 32, "avg_kite_time": 57.88},
+    {"name": "TE_Libao", "games": 70, "avg_score": 7284, "avg_decode": 154.3, "rescue_count": 82, "avg_kite_time": 49.74},
+    {"name": "TE_Maom", "games": 70, "avg_score": 6758, "avg_decode": 106.0, "rescue_count": 32, "avg_kite_time": 69.65},
+    {"name": "Wolves_Jelly", "games": 66, "avg_score": 7070, "avg_decode": 135.1, "rescue_count": 36, "avg_kite_time": 58.5},
+    {"name": "Wolves_XMX", "games": 66, "avg_score": 7644, "avg_decode": 128.1, "rescue_count": 85, "avg_kite_time": 61.44},
+    {"name": "Wolves_tian", "games": 66, "avg_score": 6775, "avg_decode": 140.8, "rescue_count": 18, "avg_kite_time": 58.33},
+    {"name": "Gr_ac", "games": 66, "avg_score": 7260, "avg_decode": 139.6, "rescue_count": 36, "avg_kite_time": 62.17},
+    {"name": "Gr_heart", "games": 66, "avg_score": 7052, "avg_decode": 131.2, "rescue_count": 85, "avg_kite_time": 55.3},
+    {"name": "Gr_AK", "games": 66, "avg_score": 7458, "avg_decode": 144.4, "rescue_count": 42, "avg_kite_time": 63.1},
+    {"name": "FPXZQ_YiHua", "games": 65, "avg_score": 6998, "avg_decode": 121.2, "rescue_count": 78, "avg_kite_time": 59.75},
+    {"name": "FPXZQ_stian", "games": 62, "avg_score": 7193, "avg_decode": 148.2, "rescue_count": 40, "avg_kite_time": 57.89},
+    {"name": "Gr_Red", "games": 62, "avg_score": 7175, "avg_decode": 143.3, "rescue_count": 33, "avg_kite_time": 61.14},
+    {"name": "MRC_HuaC", "games": 60, "avg_score": 7431, "avg_decode": 163.6, "rescue_count": 43, "avg_kite_time": 50.9},
+    {"name": "MRC_XiaoD", "games": 60, "avg_score": 6792, "avg_decode": 143.2, "rescue_count": 29, "avg_kite_time": 55.51},
+    {"name": "MRC_Nanako", "games": 60, "avg_score": 7378, "avg_decode": 142.0, "rescue_count": 32, "avg_kite_time": 60.92},
+    {"name": "GG_18", "games": 59, "avg_score": 6613, "avg_decode": 125.1, "rescue_count": 37, "avg_kite_time": 54.86},
+    {"name": "GG_kucao", "games": 59, "avg_score": 7281, "avg_decode": 131.2, "rescue_count": 67, "avg_kite_time": 57.65},
+    {"name": "DOU5_silverzhi", "games": 58, "avg_score": 6782, "avg_decode": 128.0, "rescue_count": 28, "avg_kite_time": 57.08},
+    {"name": "DOU5_Czai", "games": 58, "avg_score": 7355, "avg_decode": 146.0, "rescue_count": 50, "avg_kite_time": 59.4},
+    {"name": "DOU5_NAN", "games": 58, "avg_score": 6746, "avg_decode": 118.2, "rescue_count": 55, "avg_kite_time": 55.22},
+    {"name": "DOU5_Chen", "games": 58, "avg_score": 7594, "avg_decode": 149.6, "rescue_count": 41, "avg_kite_time": 63.48},
+    {"name": "GG_ppz", "games": 57, "avg_score": 6929, "avg_decode": 146.9, "rescue_count": 28, "avg_kite_time": 57.52},
+    {"name": "WBG_koting", "games": 56, "avg_score": 7255, "avg_decode": 143.6, "rescue_count": 43, "avg_kite_time": 51.83},
+    {"name": "WBG_Guoker", "games": 56, "avg_score": 7388, "avg_decode": 132.8, "rescue_count": 41, "avg_kite_time": 62.51},
+    {"name": "WBG_Huiyi", "games": 56, "avg_score": 6595, "avg_decode": 120.6, "rescue_count": 55, "avg_kite_time": 50.5},
+    {"name": "WBG_Persica", "games": 56, "avg_score": 7098, "avg_decode": 148.6, "rescue_count": 26, "avg_kite_time": 57.44},
+    {"name": "MRC_XiaoX", "games": 55, "avg_score": 7403, "avg_decode": 110.2, "rescue_count": 60, "avg_kite_time": 67.64},
+    {"name": "TE_Lconfid", "games": 53, "avg_score": 7138, "avg_decode": 161.0, "rescue_count": 33, "avg_kite_time": 51.96},
+    {"name": "Wolves_487", "games": 51, "avg_score": 7554, "avg_decode": 143.6, "rescue_count": 25, "avg_kite_time": 65.53},
+    {"name": "GG_ppxia", "games": 49, "avg_score": 6811, "avg_decode": 124.4, "rescue_count": 23, "avg_kite_time": 60.4},
+    {"name": "ACT_Xmiao5", "games": 49, "avg_score": 6960, "avg_decode": 124.0, "rescue_count": 32, "avg_kite_time": 60.73},
+    {"name": "ACT_xy", "games": 49, "avg_score": 7765, "avg_decode": 176.8, "rescue_count": 32, "avg_kite_time": 53.5},
+    {"name": "FPXZQ_Yuan", "games": 48, "avg_score": 7147, "avg_decode": 136.4, "rescue_count": 24, "avg_kite_time": 60.37},
+    {"name": "ACT_Eleven", "games": 47, "avg_score": 6919, "avg_decode": 118.4, "rescue_count": 50, "avg_kite_time": 60.49},
+    {"name": "FPXZQ_Long", "games": 45, "avg_score": 6506, "avg_decode": 122.3, "rescue_count": 29, "avg_kite_time": 55.81},
+    {"name": "ACT_Gougou", "games": 45, "avg_score": 6881, "avg_decode": 124.0, "rescue_count": 21, "avg_kite_time": 63.4},
+    {"name": "GW_unicorn", "games": 45, "avg_score": 7330, "avg_decode": 140.8, "rescue_count": 21, "avg_kite_time": 67.5},
+    {"name": "GW_Leil", "games": 45, "avg_score": 6956, "avg_decode": 135.0, "rescue_count": 21, "avg_kite_time": 59.6},
+    {"name": "GW_Lancelot", "games": 44, "avg_score": 6385, "avg_decode": 133.9, "rescue_count": 23, "avg_kite_time": 55.54},
+    {"name": "FPXZQ_lin", "games": 40, "avg_score": 7357, "avg_decode": 153.0, "rescue_count": 28, "avg_kite_time": 63.06},
+    {"name": "GW_lion", "games": 40, "avg_score": 6888, "avg_decode": 130.7, "rescue_count": 51, "avg_kite_time": 55.75}
+];
+
+const hunterData = [
+    {"name": "MRC_BaiLu", "games": 60, "avg_score": 10771, "avg_eliminate": 2.73, "avg_down": 6.83},
+    {"name": "FPXZQ_DongX", "games": 65, "avg_score": 10529, "avg_eliminate": 2.18, "avg_down": 6.26},
+    {"name": "WBG_N1e", "games": 56, "avg_score": 10186, "avg_eliminate": 2.2, "avg_down": 6.45},
+    {"name": "Wolves_ChoAi", "games": 54, "avg_score": 10611, "avg_eliminate": 2.46, "avg_down": 6.65},
+    {"name": "DOU5_mhxm", "games": 39, "avg_score": 10574, "avg_eliminate": 2.49, "avg_down": 6.41},
+    {"name": "GG_xawm", "games": 47, "avg_score": 10381, "avg_eliminate": 2.26, "avg_down": 6.06},
+    {"name": "Gr_Jin", "games": 66, "avg_score": 10950, "avg_eliminate": 2.79, "avg_down": 6.91},
+    {"name": "ACT_zz9", "games": 48, "avg_score": 10892, "avg_eliminate": 2.12, "avg_down": 6.73},
+    {"name": "TE_ppei", "games": 47, "avg_score": 10585, "avg_eliminate": 2.47, "avg_down": 6.81},
+    {"name": "TE_suda", "games": 23, "avg_score": 10302, "avg_eliminate": 1.96, "avg_down": 5.57},
+    {"name": "GW_ALi", "games": 18, "avg_score": 9445, "avg_eliminate": 1.78, "avg_down": 5.44},
+    {"name": "GW_tzym", "games": 19, "avg_score": 10033, "avg_eliminate": 1.74, "avg_down": 5.89},
+    {"name": "GG_Qiu", "games": 12, "avg_score": 10583, "avg_eliminate": 2.0, "avg_down": 6.42},
+    {"name": "DOU5_ssa", "games": 9, "avg_score": 10381, "avg_eliminate": 2.33, "avg_down": 6.44},
+    {"name": "Wolves_Yeyv", "games": 12, "avg_score": 9413, "avg_eliminate": 1.75, "avg_down": 5.25},
+    {"name": "DOU5_Yan", "games": 10, "avg_score": 9579, "avg_eliminate": 1.7, "avg_down": 5.8},
+    {"name": "GW_Littlie", "games": 8, "avg_score": 10829, "avg_eliminate": 2.62, "avg_down": 6.0}
+];
+
+const officialTeamData = [
+    {"name": "mrc", "win_loss": "18/3", "win_rate": 0.86, "net_win": 19, "avg_kite": 234.44, "avg_decode": 558.22, "avg_rescue": 2.82, "avg_eliminate": 2.73, "avg_down": 6.83},
+    {"name": "gr", "win_loss": "17/5", "win_rate": 0.77, "net_win": 20, "avg_kite": 240.25, "avg_decode": 554.42, "avg_rescue": 2.97, "avg_eliminate": 2.79, "avg_down": 6.8},
+    {"name": "wolves", "win_loss": "13/8", "win_rate": 0.62, "net_win": 7, "avg_kite": 243.14, "avg_decode": 548.88, "avg_rescue": 2.59, "avg_eliminate": 2.33, "avg_down": 6.39},
+    {"name": "te", "win_loss": "12/10", "win_rate": 0.55, "net_win": 2, "avg_kite": 227.83, "avg_decode": 557.67, "avg_rescue": 2.79, "avg_eliminate": 2.3, "avg_down": 6.4},
+    {"name": "wbg", "win_loss": "10/10", "win_rate": 0.5, "net_win": 2, "avg_kite": 222.28, "avg_decode": 545.55, "avg_rescue": 2.95, "avg_eliminate": 2.2, "avg_down": 6.45},
+    {"name": "gg", "win_loss": "10/10", "win_rate": 0.5, "net_win": -5, "avg_kite": 226.29, "avg_decode": 541.97, "avg_rescue": 2.76, "avg_eliminate": 2.2, "avg_down": 6.14},
+    {"name": "dou5", "win_loss": "8/11", "win_rate": 0.42, "net_win": 0, "avg_kite": 235.17, "avg_decode": 541.74, "avg_rescue": 3.0, "avg_eliminate": 2.33, "avg_down": 6.31},
+    {"name": "fpx-zq", "win_loss": "7/14", "win_rate": 0.33, "net_win": -10, "avg_kite": 236.99, "avg_decode": 542.02, "avg_rescue": 3.06, "avg_eliminate": 2.18, "avg_down": 6.26},
+    {"name": "act", "win_loss": "4/14", "win_rate": 0.22, "net_win": -12, "avg_kite": 236.41, "avg_decode": 547.57, "avg_rescue": 2.94, "avg_eliminate": 2.1, "avg_down": 6.67},
+    {"name": "gw", "win_loss": "2/16", "win_rate": 0.11, "net_win": -23, "avg_kite": 236.06, "avg_decode": 541.29, "avg_rescue": 2.64, "avg_eliminate": 1.91, "avg_down": 5.73}
+];
+
+// ========== 2. 全局变量 ==========
+let selectedSurvivors = [];
+let selectedHunters = [];
+let myTeam = null;
+let allTeams = [...officialTeamData];
+let matchResults = [];
+let finalRank = [];
+let selectedMatchTeams = [];
+
+// ========== 3. 页面切换 ==========
+function changePage(pageId) {
+    // 切换页面显示
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    
+    // 切换导航按钮状态
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.nav-btn[data-page="${pageId}"]`).classList.add('active');
+
+    // 页面初始化
+    if (pageId === 'select') initPlayerList();
+    else if (pageId === 'team') initMyTeamPage();
+    else if (pageId === 'match') initMatchTeamList();
+    else if (pageId === 'rank') initRankList();
+}
+
+// ========== 4. 选手选择功能 ==========
+function initPlayerList() {
+    const survivorBox = document.getElementById('survivor-list');
+    const hunterBox = document.getElementById('hunter-list');
+    survivorBox.innerHTML = '';
+    hunterBox.innerHTML = '';
+
+    // 渲染求生者
+    survivorData.forEach(player => {
+        const isSelected = selectedSurvivors.some(p => p.name === player.name);
+        const card = document.createElement('div');
+        card.className = `player-card ${isSelected ? 'selected' : ''}`;
+        card.innerHTML = `
+            <div class="player-info">
+                <div class="player-name">${player.name}</div>
+                <div class="player-stats">
+                    <span>演绎分: ${player.avg_score}</span>
+                    <span>牵制: ${player.avg_kite_time}s</span>
+                </div>
+            </div>
+            <button class="select-btn" onclick="toggleSurvivor('${player.name}')">
+                ${isSelected ? '已选' : '选择'}
+            </button>
+        `;
+        survivorBox.appendChild(card);
+    });
+
+    // 渲染监管者
+    hunterData.forEach(player => {
+        const isSelected = selectedHunters.some(p => p.name === player.name);
+        const card = document.createElement('div');
+        card.className = `player-card ${isSelected ? 'selected' : ''}`;
+        card.innerHTML = `
+            <div class="player-info">
+                <div class="player-name">${player.name}</div>
+                <div class="player-stats">
+                    <span>演绎分: ${player.avg_score}</span>
+                    <span>淘汰: ${player.avg_eliminate}</span>
+                </div>
+            </div>
+            <button class="select-btn" onclick="toggleHunter('${player.name}')">
+                ${isSelected ? '已选' : '选择'}
+            </button>
+        `;
+        hunterBox.appendChild(card);
+    });
+
+    updateSelectedCount();
+}
+
+function toggleSurvivor(name) {
+    const player = survivorData.find(p => p.name === name);
+    const index = selectedSurvivors.findIndex(p => p.name === name);
+
+    if (index > -1) {
+        selectedSurvivors.splice(index, 1);
+    } else {
+        if (selectedSurvivors.length >= 4) {
+            alert('最多只能选择4个求生者！');
+            return;
+        }
+        selectedSurvivors.push(player);
+    }
+    initPlayerList();
+}
+
+function toggleHunter(name) {
+    const player = hunterData.find(p => p.name === name);
+    const index = selectedHunters.findIndex(p => p.name === name);
+
+    if (index > -1) {
+        selectedHunters.splice(index, 1);
+    } else {
+        if (selectedHunters.length >= 2) {
+            alert('最多只能选择2个监管者！');
+            return;
+        }
+        selectedHunters.push(player);
+    }
+    initPlayerList();
+}
+
+function updateSelectedCount() {
+    document.getElementById('survivor-count').textContent = selectedSurvivors.length;
+    document.getElementById('hunter-count').textContent = selectedHunters.length;
+    const btn = document.getElementById('confirm-select');
+    btn.disabled = !(selectedSurvivors.length === 4 && selectedHunters.length >= 1);
+}
+
+// ========== 5. 创建战队 ==========
+document.getElementById('confirm-select').addEventListener('click', function() {
+    const teamName = prompt('请输入你的战队名称：');
+    if (!teamName || teamName.trim() === '') {
+        alert('战队名称不能为空！');
+        return;
+    }
+
+    // 计算战队评分
+    const sScore = selectedSurvivors.reduce((sum, p) => sum + p.avg_score, 0);
+    const hScore = selectedHunters.reduce((sum, p) => sum + p.avg_score, 0);
+    const totalScore = Math.round((sScore + hScore) / (selectedSurvivors.length + selectedHunters.length));
+
+    // 计算战队属性
+    const avgKite = Math.round(selectedSurvivors.reduce((sum, p) => sum + p.avg_kite_time, 0) / selectedSurvivors.length * 4 * 100) / 100;
+    const avgDecode = Math.round(selectedSurvivors.reduce((sum, p) => sum + p.avg_decode, 0) / selectedSurvivors.length * 4 * 100) / 100;
+    const avgRescue = Math.round(selectedSurvivors.reduce((sum, p) => sum + p.rescue_count, 0) / selectedSurvivors.length / 10 * 100) / 100;
+    const avgEliminate = Math.round(selectedHunters.reduce((sum, p) => sum + p.avg_eliminate, 0) / selectedHunters.length * 100) / 100;
+    const avgDown = Math.round(selectedHunters.reduce((sum, p) => sum + p.avg_down, 0) / selectedHunters.length * 100) / 100;
+
+    myTeam = {
+        name: teamName.trim(),
+        isUserTeam: true,
+        win_loss: '0/0',
+        win_rate: 0,
+        net_win: 0,
+        avg_kite: avgKite,
+        avg_decode: avgDecode,
+        avg_rescue: avgRescue,
+        avg_eliminate: avgEliminate,
+        avg_down: avgDown,
+        score: totalScore,
+        survivors: [...selectedSurvivors],
+        hunters: [...selectedHunters]
+    };
+
+    allTeams = [...officialTeamData, myTeam];
+    alert(`战队「${teamName.trim()}」创建成功！`);
+    changePage('team');
+});
+
+// ========== 6. 我的战队页面 ==========
+function initMyTeamPage() {
+    const noTip = document.getElementById('no-team-tip');
+    const teamInfo = document.getElementById('my-team-info');
+
+    if (!myTeam) {
+        noTip.style.display = 'block';
+        teamInfo.style.display = 'none';
+        return;
+    }
+
+    noTip.style.display = 'none';
+    teamInfo.style.display = 'block';
+    document.getElementById('team-name').textContent = myTeam.name;
+    document.getElementById('team-score').textContent = myTeam.score;
+
+    const sBox = document.getElementById('team-survivors');
+    const hBox = document.getElementById('team-hunters');
+    sBox.innerHTML = '';
+    hBox.innerHTML = '';
+
+    myTeam.survivors.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+            <div class="player-info">
+                <div class="player-name">${p.name}</div>
+                <div class="player-stats">
+                    <span>演绎分: ${p.avg_score}</span>
+                    <span>牵制: ${p.avg_kite_time}s</span>
+                </div>
+            </div>
+        `;
+        sBox.appendChild(card);
+    });
+
+    myTeam.hunters.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+            <div class="player-info">
+                <div class="player-name">${p.name}</div>
+                <div class="player-stats">
+                    <span>演绎分: ${p.avg_score}</span>
+                    <span>淘汰: ${p.avg_eliminate}</span>
+                </div>
+            </div>
+        `;
+        hBox.appendChild(card);
+    });
+}
+
+// ========== 7. 比赛模拟功能 ==========
+function initMatchTeamList() {
+    const listBox = document.getElementById('match-team-list');
+    listBox.innerHTML = '';
+    selectedMatchTeams = [];
+    updateMatchTeamCount();
+
+    allTeams.forEach(team => {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+            <div class="team-name">${team.name} ${team.isUserTeam ? '(你的战队)' : ''}</div>
+            <div class="team-stats">胜率: ${Math.round(team.win_rate * 100)}%</div>
+        `;
+        card.addEventListener('click', function() {
+            const idx = selectedMatchTeams.findIndex(t => t.name === team.name);
+            if (idx > -1) {
+                selectedMatchTeams.splice(idx, 1);
+                card.classList.remove('selected');
+            } else {
+                selectedMatchTeams.push(team);
+                card.classList.add('selected');
+            }
+            updateMatchTeamCount();
+        });
+        listBox.appendChild(card);
+    });
+
+    document.getElementById('match-result').style.display = 'none';
+}
+
+function updateMatchTeamCount() {
+    document.getElementById('match-team-count').textContent = selectedMatchTeams.length;
+    document.getElementById('start-match').disabled = selectedMatchTeams.length < 2;
+}
+
+// 开始比赛
+document.getElementById('start-match').addEventListener('click', function() {
+    if (!confirm(`确定要让 ${selectedMatchTeams.length} 个战队开始比赛吗？`)) return;
+
+    // 重置数据
+    selectedMatchTeams.forEach(team => {
+        team.win_count = 0;
+        team.lose_count = 0;
+        team.net_win = 0;
+    });
+    matchResults = [];
+
+    // 循环对战
+    for (let i = 0; i < selectedMatchTeams.length; i++) {
+        for (let j = i + 1; j < selectedMatchTeams.length; j++) {
+            const res = simulateMatch(selectedMatchTeams[i], selectedMatchTeams[j]);
+            matchResults.push(res);
+
+            if (res.winner === selectedMatchTeams[i].name) {
+                selectedMatchTeams[i].win_count++;
+                selectedMatchTeams[j].lose_count++;
+                selectedMatchTeams[i].net_win++;
+                selectedMatchTeams[j].net_win--;
+            } else {
+                selectedMatchTeams[j].win_count++;
+                selectedMatchTeams[i].lose_count++;
+                selectedMatchTeams[j].net_win++;
+                selectedMatchTeams[i].net_win--;
+            }
+        }
+    }
+
+    // 更新胜负数据
+    selectedMatchTeams.forEach(team => {
+        team.win_loss = `${team.win_count}/${team.lose_count}`;
+        team.win_rate = team.win_count / (team.win_count + team.lose_count);
+    });
+
+    // 生成排名
+    finalRank = [...selectedMatchTeams].sort((a, b) => {
+        if (b.net_win !== a.net_win) return b.net_win - a.net_win;
+        return b.win_rate - a.win_rate;
+    });
+
+    renderMatchResult();
+});
+
+function simulateMatch(a, b) {
+    const scoreA = calcPower(a);
+    const scoreB = calcPower(b);
+    const winRateA = scoreA / (scoreA + scoreB);
+    const rand = Math.random();
+
+    let winner, sa, sb;
+    if (rand < winRateA) {
+        winner = a.name;
+        sa = 2;
+        sb = Math.random() < 0.7 ? 0 : 1;
+    } else {
+        winner = b.name;
+        sb = 2;
+        sa = Math.random() < 0.7 ? 0 : 1;
+    }
+
+    return { teamA: a.name, teamB: b.name, scoreA: sa, scoreB: sb, winner: winner };
+}
+
+function calcPower(team) {
+    const d = team.avg_decode * 0.3;
+    const k = team.avg_kite * 0.3;
+    const r = team.avg_rescue * 100 * 0.2;
+    const e = team.avg_eliminate * 10 * 0.2;
+    return Math.round((d + k + r + e) * 100);
+}
+
+function renderMatchResult() {
+    const box = document.getElementById('match-result');
+    const list = document.getElementById('result-list');
+    box.style.display = 'block';
+    list.innerHTML = '';
+
+    matchResults.forEach(res => {
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `
+            <div><strong>${res.teamA}</strong>  ${res.scoreA}</div>
+            <span class="vs">VS</span>
+            <div>${res.scoreB}  <strong>${res.teamB}</strong></div>
+            <div>胜者：<strong>${res.winner}</strong></div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// ========== 8. 排名页面 ==========
+function initRankList() {
+    const box = document.getElementById('rank-list');
+    box.innerHTML = '';
+    const data = finalRank.length > 0 ? finalRank : officialTeamData;
+
+    data.forEach((team, idx) => {
+        const item = document.createElement('div');
+        item.className = 'rank-item';
+        item.innerHTML = `
+            <div class="rank-number">${idx + 1}</div>
+            <div class="rank-info">
+                <div class="rank-team-name">${team.name} ${team.isUserTeam ? '(你的战队)' : ''}</div>
+                <div class="rank-stats">
+                    <span>胜负: ${team.win_loss}</span>
+                    <span>胜率: ${Math.round(team.win_rate * 100)}%</span>
+                    <span>净胜局: ${team.net_win}</span>
+                </div>
+            </div>
+        `;
+        box.appendChild(item);
+    });
+}
+
+// ========== 页面加载完成，初始化首页 ==========
+window.onload = function() {
+    changePage('home');
+};
+    </script>
+</body>
+</html>
